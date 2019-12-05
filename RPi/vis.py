@@ -54,12 +54,15 @@ plot.addItem(fill)
 if __name__ == '__main__':
     while True:
         read_serial = ser.readline()
-        s[0] = int(ser.readline(), 16)
-        print(s[0])
-        time.sleep(0.002)
-        #data = [0, random.uniform(-1, 1)]
-        curves1.setData(x=x1, y=np.array([0, s[0]]))
-        curves2.setData(x=x2, y=np.array([0, s[0]]))
-        QtGui.QApplication.processEvents()
+        try:
+            s[0] = int(ser.readline(), 16)
+            print(s[0])
+            time.sleep(0.002)
+            # data = [0, random.uniform(-1, 1)]
+            curves1.setData(x=x1, y=np.array([131, s[0]]))
+            curves2.setData(x=x2, y=np.array([131, s[0]]))
+            QtGui.QApplication.processEvents()
+        except ValueError:
+            pass
         # time.sleep(0.5)
 # app.exec_()
