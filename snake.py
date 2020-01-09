@@ -63,9 +63,16 @@ def move():
     head = snake[-1].copy()
     head.move(aim)
 
-    if not inside(head) or head in snake:
+
+    if not inside(head) or head in snake: #game over
         square(head.x, head.y, 9, 'red')
+        change(0, -100)
+        #head = snake[-1].copy()
+        #head.move(aim)
         update()
+        #wait a couple of seconds and then reset the snake to origianal position
+        #print('game over')
+        #time.sleep(2)
         return
 
     snake.append(head)
@@ -84,7 +91,7 @@ def move():
 
     square(food.x, food.y, 9, 'green')
     update()
-    ontimer(move, 100)
+    ontimer(move, 250)
 
 
 def read_from_port(ser):
@@ -116,6 +123,7 @@ thread.start()
 
 snp_state = State(100, 120, 150, 200)
 
+
 setup(420, 420, 370, 0)
 hideturtle()
 tracer(False)
@@ -126,4 +134,28 @@ listen()
 # onkey(lambda: change(0, 10), 'Up')
 # onkey(lambda: change(0, -10), 'Down')
 move()
+#print('done')
+#move()
 done()
+#time.sleep(2)
+
+#############################################
+#New code, trying to get the program to run again after game over
+############################################
+#food = vector(0, 0)
+#snake = [vector(10,0)]
+#aim = vector(0,-10)
+
+#print('test')
+#thread = threading.Thread(target=read_from_port, args=(serial_port,))
+#thread.start()
+
+#snp_state = State(100,120,150,200)
+
+#setup(420, 420, 370, 0)
+#hideturtle()
+#tracer(False)
+#listen()
+
+#move()
+#done()
