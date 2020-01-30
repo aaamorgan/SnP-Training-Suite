@@ -167,7 +167,7 @@ class SnPState(threading.Thread):
         # tests puff ramp up/down times
         # ramp up time starts when the pressure leaves the deadband
         deadband_threshold = self._ambient_pressure+self._deadband
-        input("Press Enter when ready to begin")
+        input("Stop all input and press Enter when ready to begin")
         time.sleep(0.1)
         pressure = self.getPressure()
         # loop blocks until pressure is outside deadband
@@ -204,7 +204,7 @@ class SnPState(threading.Thread):
         # tests sip ramp up/down times
         # ramp up time starts when the pressure leaves the deadband
         deadband_threshold = self._ambient_pressure-self._deadband
-        input("Press Enter when ready to begin")
+        input("Stop all input and press Enter when ready to begin")
         time.sleep(0.1)
         pressure = self.getPressure()
         # loop blocks until pressure is outside deadband
