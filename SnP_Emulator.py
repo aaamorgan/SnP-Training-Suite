@@ -1,7 +1,8 @@
 import threading
 import time
 from serial import Serial
-NUM_SAMPLES = 5
+import csv
+NUM_SAMPLES = 3
 
 class SnPState(threading.Thread):
     def __init__(self, serial_port):
@@ -86,6 +87,10 @@ class SnPState(threading.Thread):
         return self._state            
 
     def setup(self):
+        if input("Load user profile? (y/n) ") is 'y':
+            self._readCsv()
+            self._params_set = True
+            return 
         pressures = {'hard_sip': [],
                     'soft_sip': [],
                     'hard_puff': [],
@@ -138,6 +143,8 @@ class SnPState(threading.Thread):
         self._puff_ramp_times_test()
         self._sip_ramp_times_test()
 
+        if input("Write user profile to file? (y/n)") is 'y':
+            self._writeCsv()
         self._params_set = True
 
     def _threshold_test(self):
@@ -229,6 +236,30 @@ class SnPState(threading.Thread):
                 self._sip_ramp_times_test()
         self._sip_ramp_down = ramp_down_time
         self._sip_ramp_up = ramp_up_time
+    
+    def _writeCsv(self):
+        # Should be called at end of setup routine
+        with open('profile.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
+            writer.writerow([self._sip_threshold,
+                             self._deadband,
+                             self._puff_threshold,
+                             self._sip_ramp_down,
+                             self._sip_ramp_up,
+                             self._puff_ramp_down,
+                             self._puff_ramp_up])
+    def _readCsv(self):
+        with open('profile.csv') as csvfile:
+            reader = csv.reader(csvfile, delimiter=',')
+            # row = reader[0]
+            for row in reader:
+                self._sip_threshold = float(row[0])
+                self._deadband = float(row[1])
+                self._puff_threshold = float(row[2])
+                self._sip_ramp_down = float(row[3])
+                self._sip_ramp_up = float(row[4])
+                self._puff_ramp_down = float(row[5])
+                self._puff_ramp_up = float(row[6])
 
 def main():
     ser = Serial('/dev/ttyACM0',9600,timeout=None)
