@@ -1,12 +1,14 @@
 import threading
 import time
-from serial import Serial
+# from serial import Serial
+import spidev
+
 NUM_SAMPLES = 5
 
 class SnPState(threading.Thread):
-    def __init__(self, serial_port):
+    def __init__(self, spi_bus):
         super().__init__(daemon=True)
-        self._port = serial_port
+        self._port = spi_bus
         self._press_lock = threading.Lock()
         self._curr_pressure = 0
         self._ambient_pressure = 132.0
@@ -62,16 +64,23 @@ class SnPState(threading.Thread):
     def run(self):
         # method run when ::meth::'start()' is called (comes from base class)
         while True:
-            s = [0]
-            read_serial = self._port.readline()
-            try:
-                s[0] = int(read_serial)
-                self._setPressure(s[0])
-                # want this sleep to be less than the period of the serial info (50 ms as of 1/20/20)
-                # so that the read actually blocks until there's new data
-                time.sleep(0.025)
-            except ValueError:
-                pass
+            data_bytes = self._port.readbytes(2)
+            # MSB is 5 bits of first received byte
+            data_MSB = (data_bytes[0] & 0x1F) << 7
+            # LSB has extra bit at end
+            data_LSB = data_bytes[1] >> 1
+            data = data_MSB+data_LSB
+            self._setPressure(data)
+            # s = [0]
+            # read_serial = self._port.readline()
+            # try:
+            #     s[0] = int(read_serial)
+            #     self._setPressure(s[0])
+            #     # want this sleep to be less than the period of the serial info (50 ms as of 1/20/20)
+            #     # so that the read actually blocks until there's new data
+            #     time.sleep(0.025)
+            # except ValueError:
+            #     pass
     def _setPressure(self, pressure):
         with self._press_lock:
             self._curr_pressure = pressure
@@ -97,7 +106,7 @@ class SnPState(threading.Thread):
             pressure = self.getPressure()
             avg_ambient_pressure += pressure
             i = i + 1
-            time.sleep(0.1)
+            # time.sleep(0.1)
         avg_ambient_pressure = avg_ambient_pressure / NUM_SAMPLES
         self._ambient_pressure = avg_ambient_pressure
         # 1. User identifier/profile load (assume new user)
@@ -146,7 +155,7 @@ class SnPState(threading.Thread):
         for i in range(NUM_SAMPLES):
             input("Press Enter to take measurement {}".format(i + 1))
             # sleep to allow for data from read thread to come in
-            time.sleep(0.1)
+            # time.sleep(0.1)
             pressure = self.getPressure()
             pressures.append(pressure)
         print(pressures)
@@ -161,19 +170,19 @@ class SnPState(threading.Thread):
         # ramp up time starts when the pressure leaves the deadband
         deadband_threshold = self._ambient_pressure+self._deadband
         input("Press Enter when ready to begin")
-        time.sleep(0.1)
+        # time.sleep(0.1)
         pressure = self.getPressure()
         # loop blocks until pressure is outside deadband
         print("Looking for hard puff...")
         while pressure <= self._puff_threshold:
-            time.sleep(0.05)
+            # time.sleep(0.05)
             pressure = self.getPressure()
             # if pressure is within deadband, reset start time
             if pressure < deadband_threshold:
                 ramp_up_start_time = time.time()
         ramp_up_time = time.time() - ramp_up_start_time
         while pressure >= deadband_threshold:
-            time.sleep(0.025)
+            # time.sleep(0.025)
             pressure = self.getPressure()
             # if pressure is within deadband, reset start time
             if pressure > self._puff_threshold:
@@ -198,19 +207,19 @@ class SnPState(threading.Thread):
         # ramp up time starts when the pressure leaves the deadband
         deadband_threshold = self._ambient_pressure-self._deadband
         input("Press Enter when ready to begin")
-        time.sleep(0.1)
+        # time.sleep(0.1)
         pressure = self.getPressure()
         # loop blocks until pressure is outside deadband
         print("Looking for hard sip...")
         while pressure >= self._sip_threshold:
-            time.sleep(0.025)
+            # time.sleep(0.025)
             pressure = self.getPressure()
             # if pressure is within deadband, reset start time
             if pressure > deadband_threshold:
                 ramp_up_start_time = time.time()
         ramp_up_time = time.time() - ramp_up_start_time
         while pressure <= deadband_threshold:
-            time.sleep(0.025)
+            # time.sleep(0.025)
             pressure = self.getPressure()
             # if pressure is within deadband, reset start time
             if pressure < self._sip_threshold:
@@ -231,23 +240,45 @@ class SnPState(threading.Thread):
         self._sip_ramp_up = ramp_up_time
 
 def main():
-    ser = Serial('/dev/ttyACM0',9600,timeout=None)
-    snp_state = SnPState(ser)
+    # ser = Serial('/dev/ttyACM0',9600,timeout=None)
+    bus = 0
+
+    device = 0
+
+    spi = spidev.SpiDev()
+
+    spi.open(bus, device)
+
+    # Speed should be faster than 10kHz as recommended by ADC data sheet
+    spi.max_speed_hz = 16000
+    spi.bits_per_word = 8
+
+    # Think this corresponds to the ADC sampling when the clock (or select?) has a rising edge
+    # and shift out data on a falling edge
+    spi.mode = 0b10
+    spi.threewire = False
+
+    # CS active low?
+    spi.cshigh = False
+    snp_state = SnPState(spi)
     snp_state.start()
     time.sleep(0.1)
     snp_state.setup()
     # snp_state._sip_ramp_times_test()
     prev_state = 'hard_puff'
-    while True:
-        # pressure = snp_state.getPressure()
-        # print(pressure, time.time())
-        curr_state = snp_state.getState()
-        if prev_state is not curr_state:
-            prev_state = curr_state
-            pressure = snp_state.getPressure()
-            print("State change: ", curr_state, pressure)
+    try:
+        while True:
+            # pressure = snp_state.getPressure()
+            # print(pressure, time.time())
+            curr_state = snp_state.getState()
+            if prev_state is not curr_state:
+                prev_state = curr_state
+                pressure = snp_state.getPressure()
+                print("State change: ", curr_state, pressure)
 
-        time.sleep(0.025)
+            time.sleep(0.025)
+    except KeyboardInterrupt:
+        spi.close()
     return
 
 if __name__ == '__main__':
