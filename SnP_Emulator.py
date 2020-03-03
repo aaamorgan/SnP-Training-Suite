@@ -7,7 +7,23 @@ NUM_SAMPLES = 3
 class SnPState(threading.Thread):
     def __init__(self, spi_bus):
         super().__init__(daemon=True)
-        self._port = spi_bus
+        bus = 0
+        device = 0
+        self._port = spidev.SpiDev()
+        self._port.open(bus, device)
+
+        # Speed should be faster than 10kHz as recommended by ADC data sheet
+        self._port.max_speed_hz = 16000
+        self._port.bits_per_word = 8
+
+        # Think this corresponds to the ADC sampling when the clock (or select?) has a rising edge
+        # and shift out data on a falling edge
+        self._port.mode = 0b10
+        self._port.threewire = False
+
+        # CS active low
+        self._port.cshigh = False
+        # self._port = spi_bus
         self._press_lock = threading.Lock()
         self._curr_pressure = 0
         self._ambient_pressure = 132.0
