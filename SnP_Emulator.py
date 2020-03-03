@@ -1,9 +1,8 @@
 import threading
 import time
-# from serial import Serial
 import spidev
-
-NUM_SAMPLES = 5
+import csv
+NUM_SAMPLES = 3
 
 class SnPState(threading.Thread):
     def __init__(self, spi_bus):
@@ -71,22 +70,12 @@ class SnPState(threading.Thread):
             data_LSB = data_bytes[1] >> 1
             data = data_MSB+data_LSB
             self._setPressure(data)
-            # s = [0]
-            # read_serial = self._port.readline()
-            # try:
-            #     s[0] = int(read_serial)
-            #     self._setPressure(s[0])
-            #     # want this sleep to be less than the period of the serial info (50 ms as of 1/20/20)
-            #     # so that the read actually blocks until there's new data
-            #     time.sleep(0.025)
-            # except ValueError:
-            #     pass
+
     def _setPressure(self, pressure):
         with self._press_lock:
             self._curr_pressure = pressure
         if self._params_set:
             self._setState(pressure)
-        # print(pressure)
     def getPressure(self):
         with self._press_lock:
             return self._curr_pressure
@@ -95,6 +84,10 @@ class SnPState(threading.Thread):
         return self._state            
 
     def setup(self):
+        if input("Load user profile? (y/n) ") is 'y':
+            self._readCsv()
+            self._params_set = True
+            return 
         pressures = {'hard_sip': [],
                     'soft_sip': [],
                     'hard_puff': [],
@@ -147,10 +140,13 @@ class SnPState(threading.Thread):
         self._puff_ramp_times_test()
         self._sip_ramp_times_test()
 
+        if input("Write user profile to file? (y/n)") is 'y':
+            self._writeCsv()
+
         self._params_set = True
 
     def _threshold_test(self):
-        # Takes 5 pressure readings when desired
+        # Takes pressure readings when desired
         pressures = []
         for i in range(NUM_SAMPLES):
             input("Press Enter to take measurement {}".format(i + 1))
@@ -239,14 +235,36 @@ class SnPState(threading.Thread):
         self._sip_ramp_down = ramp_down_time
         self._sip_ramp_up = ramp_up_time
 
+    def _writeCsv(self):
+        # Should be called at end of setup routine
+        with open('profile.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
+            writer.writerow([self._ambient_pressure,
+                             self._sip_threshold,
+                             self._deadband,
+                             self._puff_threshold,
+                             self._sip_ramp_down,
+                             self._sip_ramp_up,
+                             self._puff_ramp_down,
+                             self._puff_ramp_up])
+    def _readCsv(self):
+        with open('profile.csv') as csvfile:
+            reader = csv.reader(csvfile, delimiter=',')
+            # row = reader[0]
+            for row in reader:
+                self._ambient_pressure = float(row[0])
+                self._sip_threshold = float(row[1])
+                self._deadband = float(row[2])
+                self._puff_threshold = float(row[3])
+                self._sip_ramp_down = float(row[4])
+                self._sip_ramp_up = float(row[5])
+                self._puff_ramp_down = float(row[6])
+                self._puff_ramp_up = float(row[7])
+
 def main():
-    # ser = Serial('/dev/ttyACM0',9600,timeout=None)
     bus = 0
-
     device = 0
-
     spi = spidev.SpiDev()
-
     spi.open(bus, device)
 
     # Speed should be faster than 10kHz as recommended by ADC data sheet
@@ -258,7 +276,7 @@ def main():
     spi.mode = 0b10
     spi.threewire = False
 
-    # CS active low?
+    # CS active low
     spi.cshigh = False
     snp_state = SnPState(spi)
     snp_state.start()
