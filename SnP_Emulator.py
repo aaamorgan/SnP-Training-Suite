@@ -5,7 +5,7 @@ import csv
 NUM_SAMPLES = 3
 
 class SnPState(threading.Thread):
-    def __init__(self, spi_bus):
+    def __init__(self):
         super().__init__(daemon=True)
         bus = 0
         device = 0
@@ -23,7 +23,7 @@ class SnPState(threading.Thread):
 
         # CS active low
         self._port.cshigh = False
-        # self._port = spi_bus
+
         self._press_lock = threading.Lock()
         self._curr_pressure = 0
         self._ambient_pressure = 132.0
@@ -278,23 +278,7 @@ class SnPState(threading.Thread):
                 self._puff_ramp_up = float(row[7])
 
 def main():
-    bus = 0
-    device = 0
-    spi = spidev.SpiDev()
-    spi.open(bus, device)
-
-    # Speed should be faster than 10kHz as recommended by ADC data sheet
-    spi.max_speed_hz = 16000
-    spi.bits_per_word = 8
-
-    # Think this corresponds to the ADC sampling when the clock (or select?) has a rising edge
-    # and shift out data on a falling edge
-    spi.mode = 0b10
-    spi.threewire = False
-
-    # CS active low
-    spi.cshigh = False
-    snp_state = SnPState(spi)
+    snp_state = SnPState()
     snp_state.start()
     time.sleep(0.1)
     snp_state.setup()
