@@ -276,27 +276,25 @@ class SnPState(threading.Thread):
                 self._sip_ramp_up = float(row[5])
                 self._puff_ramp_down = float(row[6])
                 self._puff_ramp_up = float(row[7])
+        
+    def __del__(self):
+        # destructor to close spi bus
+        self._port.close()
 
 def main():
     snp_state = SnPState()
     snp_state.start()
     time.sleep(0.1)
     snp_state.setup()
-    # snp_state._sip_ramp_times_test()
     prev_state = 'hard_puff'
-    try:
-        while True:
-            # pressure = snp_state.getPressure()
-            # print(pressure, time.time())
-            curr_state = snp_state.getState()
-            if prev_state is not curr_state:
-                prev_state = curr_state
-                pressure = snp_state.getPressure()
-                print("State change: ", curr_state, pressure)
+    while True:
+        curr_state = snp_state.getState()
+        if prev_state is not curr_state:
+            prev_state = curr_state
+            pressure = snp_state.getPressure()
+            print("State change: ", curr_state, pressure)
 
-            time.sleep(0.025)
-    except KeyboardInterrupt:
-        spi.close()
+        time.sleep(0.025)
     return
 
 if __name__ == '__main__':
