@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Sphinx Autodoc Example &#8212; Sip and Puff Training Suite  documentation</title>
+    <title>Sip and Puff Training Suite &#8212; Sip and Puff Training Suite  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -30,9 +30,11 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-SnP_Emulator">
-<span id="sphinx-autodoc-example"></span><h1>Sphinx Autodoc Example<a class="headerlink" href="#module-SnP_Emulator" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="snp-emulator-py">
+  <div class="section" id="sip-and-puff-training-suite">
+<h1>Sip and Puff Training Suite<a class="headerlink" href="#sip-and-puff-training-suite" title="Permalink to this headline">¶</a></h1>
+<p>Architecture of Emulator</p>
+<img alt="_images/EmulatorArchitecture.png" src="_images/EmulatorArchitecture.png" />
+<span class="target" id="module-SnP_Emulator"></span><div class="section" id="snp-emulator-py">
 <h2>SnP_Emulator.py<a class="headerlink" href="#snp-emulator-py" title="Permalink to this headline">¶</a></h2>
 <p>The Sip and Puff Emulator.</p>
 <dl class="py class">
@@ -41,7 +43,7 @@
 <dd><p>Class for reading and translating pressure values received over SPI
 to sip and puff states.
 After instantiating this class, it should have the thread started and the setup method invoked.
-This class is intended to be used with ADC ADC: MCP3201-CI/P
+This class is intended to be used with ADC: MCP3201-CI/P
 Ex:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">snp_state</span> <span class="o">=</span> <span class="n">SnPState</span><span class="p">()</span>
 <span class="n">snp_state</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
