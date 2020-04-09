@@ -1,4 +1,4 @@
-Sphinx Autodoc Example
+Sip and Puff Training Suite
 ======================
 
 .. automodule:: SnP_Emulator
