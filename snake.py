@@ -5,8 +5,6 @@
 from turtle import *
 from random import randrange
 from freegames import square, vector
-import threading
-from serial import Serial
 import time
 from queue import Queue
 from SnP_Emulator import SnPState
@@ -87,6 +85,7 @@ hideturtle()
 tracer(False)
 listen()
 
+# Keyboard Controls
 # onkey(lambda: change(10, 0), 'Right')
 # onkey(lambda: change(-10, 0), 'Left')
 # onkey(lambda: change(0, 10), 'Up')
