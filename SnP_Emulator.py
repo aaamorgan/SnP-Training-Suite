@@ -5,7 +5,20 @@ import csv
 NUM_SAMPLES = 3
 
 class SnPState(threading.Thread):
+    """Class for reading and translating pressure values received over SPI
+    to sip and puff states.
+    After instantiating this class, it should have the thread started and the setup method invoked.
+    Ex:
+        snp_state = SnPState()
+        snp_state.start()
+        time.sleep(0.1)
+        snp_state.setup()
+    """
     def __init__(self):
+        """Constructor. Initializes the SPI bus for use with
+        ADC: MCP3201-CI/P.
+        The sip and puff parameters must be set up with the setup() method.
+        """
         super().__init__(daemon=True)
         bus = 0
         device = 0
@@ -24,22 +37,28 @@ class SnPState(threading.Thread):
         # CS active low
         self._port.cshigh = False
 
+        # Lock for protecting the pressure.
         self._press_lock = threading.Lock()
         self._curr_pressure = 0
-        self._ambient_pressure = 132.0
-        self._deadband = 25
-        self._sip_threshold = 40
-        self._sip_ramp_down = 0.1
-        self._sip_ramp_up = 0.1
-        self._puff_threshold = 209
-        self._puff_ramp_down = 0.4
-        self._puff_ramp_up = 0.4
+        self._ambient_pressure = 0.0
+        self._deadband = 0
+        self._sip_threshold = 0
+        self._sip_ramp_down = 0
+        self._sip_ramp_up = 0
+        self._puff_threshold = 0
+        self._puff_ramp_down = 0
+        self._puff_ramp_up = 0
         self._params_set = False
         self._state = 'deadband'
         self._ramp_wait = False
         self._ramp_time = 0.0
     
     def _setState(self, pressure):
+        """Sets the sip and puff state according to the incoming pressure.
+
+        Args:
+            pressure (int): The input pressure value.
+        """
         if pressure > self._puff_threshold:
             self._state = 'hard_puff'
             self._ramp_wait = False
@@ -77,7 +96,10 @@ class SnPState(threading.Thread):
             self._ramp_wait = False
 
     def run(self):
-        # method run when ::meth::'start()' is called (comes from base class)
+        """Function ran by thread when ::meth::'start()' is called.
+           It reads 2 bytes at a time and does bitmath to translate what it
+           reads into the 12-bit number. The bitmath can be determined from the ADC data sheet.
+        """
         while True:
             data_bytes = self._port.readbytes(2)
             # MSB is 5 bits of first received byte
@@ -88,18 +110,38 @@ class SnPState(threading.Thread):
             self._setPressure(data)
 
     def _setPressure(self, pressure):
+        """Sets the current pressure and updates the state if the user profile has been setup.
+        This should only be called from within the run() method.
+
+        Args:
+            pressure (int): The input pressure.
+        """
         with self._press_lock:
             self._curr_pressure = pressure
         if self._params_set:
             self._setState(pressure)
     def getPressure(self):
+        """Safe external interface for getting the current pressure value.
+        """
         with self._press_lock:
             return self._curr_pressure
     
     def getState(self):
+        """Interface for getting current state.
+        """
         return self._state            
 
     def setup(self):
+        """Setup routine. This should always be called after class instantiation and thread starting.
+        It:
+            1. Reads in the user profile if told to.
+            2. Samples NUM_SAMPLES times to determine an average ambient pressure.
+            3. Runs through a routine to set all of the sip/puff thresholds.
+            4. Allows manual changing of calculated parameters.
+            5. Goes through a test to determine ramp times.
+            6. Prompts user to save the user profile.
+        """
+        # 1. User identifier/profile load (assume new user)
         if input("Load user profile? (y/n) ") is 'y':
             self._readCsv()
             self._params_set = True
@@ -118,9 +160,7 @@ class SnPState(threading.Thread):
             # time.sleep(0.1)
         avg_ambient_pressure = avg_ambient_pressure / NUM_SAMPLES
         self._ambient_pressure = avg_ambient_pressure
-        # 1. User identifier/profile load (assume new user)
-        # if input("Setup a new user profile?") is 'n':
-        #     print("Load profile")
+
         # 2. SnP thresholds
         for state in pressures.keys():
             print("Starting {} measurements".format(state))
@@ -162,6 +202,12 @@ class SnPState(threading.Thread):
         self._params_set = True
 
     def _threshold_test(self):
+        """Sip and Puff threshold test.
+        Reads in NUM_SAMPLES pressure values, one at a time depending on the user pressing ENTER.
+
+        Returns:
+            pressures (list): List of NUM_SAMPLES pressure values.
+        """
         # Takes pressure readings when desired
         pressures = []
         for i in range(NUM_SAMPLES):
@@ -178,6 +224,10 @@ class SnPState(threading.Thread):
         return pressures
             
     def _puff_ramp_times_test(self):
+        """Determines puff ramp up and down times.
+        It measures the time to go from the deadband range to a hard puff the time back to deadband.
+        Allows for manual change of numbers at end.
+        """
         # tests puff ramp up/down times
         # ramp up time starts when the pressure leaves the deadband
         deadband_threshold = self._ambient_pressure+self._deadband
@@ -215,6 +265,10 @@ class SnPState(threading.Thread):
         self._puff_ramp_up = ramp_up_time
 
     def _sip_ramp_times_test(self):
+        """Determines sip ramp up and down times.
+        It measures the time to go from the deadband range to a hard sip the time back to deadband.
+        Allows for manual change of numbers at end.
+        """
         # tests sip ramp up/down times
         # ramp up time starts when the pressure leaves the deadband
         deadband_threshold = self._ambient_pressure-self._deadband
@@ -252,6 +306,8 @@ class SnPState(threading.Thread):
         self._sip_ramp_up = ramp_up_time
 
     def _writeCsv(self):
+        """Writes a one-line file profile.csv with sip and puff parameters
+        """
         # Should be called at end of setup routine
         with open('profile.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=',')
@@ -264,6 +320,8 @@ class SnPState(threading.Thread):
                              self._puff_ramp_down,
                              self._puff_ramp_up])
     def _readCsv(self):
+        """Reads profile.csv for the last saved user profile and populates the class parameter values.
+        """
         with open('profile.csv') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
             # row = reader[0]
@@ -278,7 +336,8 @@ class SnPState(threading.Thread):
                 self._puff_ramp_up = float(row[7])
         
     def __del__(self):
-        # destructor to close spi bus
+        """Destructor to close spi port.
+        """
         self._port.close()
 
 def main():

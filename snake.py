@@ -1,5 +1,5 @@
 """Snake, classic arcade game.
- 
+    Code based on code from: https://github.com/grantjenks/free-python-games/tree/master/freegames
 """
 
 from turtle import *
