@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sphinx Autodoc Example &#8212; Sip and Puff Training Suite  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-SnP_Emulator">
+<span id="sphinx-autodoc-example"></span><h1>Sphinx Autodoc Example<a class="headerlink" href="#module-SnP_Emulator" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="snp-emulator-py">
+<h2>SnP_Emulator.py<a class="headerlink" href="#snp-emulator-py" title="Permalink to this headline">¶</a></h2>
+<p>The Sip and Puff Emulator.</p>
+<dl class="py class">
+<dt id="SnP_Emulator.SnPState">
+<em class="property">class </em><code class="sig-prename descclassname">SnP_Emulator.</code><code class="sig-name descname">SnPState</code><a class="headerlink" href="#SnP_Emulator.SnPState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for reading and translating pressure values received over SPI
+to sip and puff states.
+After instantiating this class, it should have the thread started and the setup method invoked.
+This class is intended to be used with ADC ADC: MCP3201-CI/P
+Ex:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">snp_state</span> <span class="o">=</span> <span class="n">SnPState</span><span class="p">()</span>
+<span class="n">snp_state</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">snp_state</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="SnP_Emulator.SnPState.getPressure">
+<code class="sig-name descname">getPressure</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#SnP_Emulator.SnPState.getPressure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Safe external interface for getting the current pressure value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="SnP_Emulator.SnPState.getState">
+<code class="sig-name descname">getState</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#SnP_Emulator.SnPState.getState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interface for getting current state.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="SnP_Emulator.SnPState.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#SnP_Emulator.SnPState.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function ran by thread when ::meth::’start()’ is called.
+It reads 2 bytes at a time and does bitmath to translate what it
+reads into the 12-bit number. The bitmath can be determined from the ADC data sheet.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="SnP_Emulator.SnPState.setup">
+<code class="sig-name descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#SnP_Emulator.SnPState.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup routine. This should always be called after class instantiation and thread starting.
+It:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Reads in the user profile if told to.</p></li>
+<li><p>Samples NUM_SAMPLES times to determine an average ambient pressure.</p></li>
+<li><p>Runs through a routine to set all of the sip/puff thresholds.</p></li>
+<li><p>Allows manual changing of calculated parameters.</p></li>
+<li><p>Goes through a test to determine ramp times.</p></li>
+<li><p>Prompts user to save the user profile.</p></li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">Sip and Puff Training Suite</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Adam Morgan, Benjamin Hoppes, Allison Tanner, Daryus Patel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
