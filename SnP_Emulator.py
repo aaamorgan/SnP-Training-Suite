@@ -1,3 +1,8 @@
+"""
+SnP_Emulator.py
+====================================
+The Sip and Puff Emulator.
+"""
 import threading
 import time
 import spidev
@@ -8,7 +13,8 @@ class SnPState(threading.Thread):
     """Class for reading and translating pressure values received over SPI
     to sip and puff states.
     After instantiating this class, it should have the thread started and the setup method invoked.
-    Ex:
+    This class is intended to be used with ADC ADC: MCP3201-CI/P
+    Ex: ::
         snp_state = SnPState()
         snp_state.start()
         time.sleep(0.1)
