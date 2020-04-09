@@ -193,7 +193,18 @@ class SnPState(threading.Thread):
         print("\t SIP: threshold = {}, deadband = {}".format(rec_sip_threshold, rec_sip_deadband))
         print("\t Overall Deadband: ", rec_deadband_size)
 
-        # TODO AAM: let OTs manually change thresholds and deadband before timing tests
+        if input('Manually modify any values? (y/n) ') is 'y':
+            userIn = input('What threshold do you want to change? Enter puff, sip, or deadband: ')
+            if userIn == 'puff':
+                rec_puff_threshold = input('Current value is {}, enter new value and press ENTER: '.format(rec_puff_threshold))
+            elif userIn == 'sip':
+                rec_sip_threshold = input('Current value is {}, enter new value and press ENTER: '.format(rec_sip_threshold))
+            elif userIn == 'deadband':
+                rec_deadband_size = input('Current value is {}, enter new value and press ENTER: '.format(rec_deadband_size))
+            else:
+                print('{} is not a valid option, using recommended values'.format(userIn))
+
+
         self._deadband = rec_deadband_size
         self._sip_threshold = rec_sip_threshold
         self._puff_threshold = rec_puff_threshold
